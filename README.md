@@ -1,3 +1,7 @@
 # Personal Arch Linux Installation Script
 
-curl -sL https://raw.githubusercontent.com/adrianzech/palis/master/palis.sh | bash
+Boot archiso and run
+```bash
+wget https://raw.githubusercontent.com/adrianzech/palis/master/palis.sh
+chmod +x ./palis.sh && ./palis.sh
+```
