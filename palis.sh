@@ -34,9 +34,6 @@ exec 2> >(tee "stderr.log")
 timedatectl set-timezone Europe/Vienna
 timedatectl set-ntp true
 
-### Unmount /mnt ###
-umount -R /mnt
-
 ### Create partitions ###
 parted --script "${device}" -- mklabel gpt \
   mkpart ESP fat32 1Mib 513MiB \
@@ -67,11 +64,12 @@ grep -E -A 1 ".*Germany.*$" /etc/pacman.d/mirrorlist.bak | sed '/--/d' >> /etc/p
 rm /etc/pacman.d/mirrorlist.bak
 
 ### Install and configure the system ###
-pacstrap /mnt base base-devel linux linux-firmware amd-ucode zsh git grub efibootmgr os-prober ntfs-3g gnome gdm nvidia firefox firefox-i18n-de
+pacstrap /mnt base base-devel linux linux-firmware amd-ucode dhcpcd zsh git grub efibootmgr os-prober ntfs-3g gnome gdm nvidia firefox firefox-i18n-de
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
-arch-chroot /mnt systemctl enable dhcpcd
+arch-chroot /mnt systemctl enable dhcpcd.service
+arch-chroot /mnt systemctl enable gdm.service
 
 echo "${hostname}" > /mnt/etc/hostname
 
