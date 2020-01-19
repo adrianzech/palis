@@ -3,27 +3,27 @@ set -uo pipefail
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 
 ### Get infomation from user ###
-hostname=$(dialog --stdout --inputbox "Enter hostname" 0 0) || exit 1
+hostname=$(dialog --stdout --inputbox "Enter hostname:" 0 0) || exit 1
 clear
 : ${hostname:?"hostname cannot be empty"}
 
-user=$(dialog --stdout --inputbox "Enter username" 0 0) || exit 1
+user=$(dialog --stdout --inputbox "Enter username:" 0 0) || exit 1
 clear
 : ${user:?"user cannot be empty"}
 
-fullname=$(dialog --stdout --inputbox "Enter full name" 0 0) || exit 1
+fullname=$(dialog --stdout --inputbox "Enter full name:" 0 0) || exit 1
 clear
 : ${fullname:?"name cannot be empty"}
 
-password=$(dialog --stdout --passwordbox "Enter admin password" 0 0) || exit 1
+password=$(dialog --stdout --passwordbox "Enter password:" 0 0) || exit 1
 clear
 : ${password:?"password cannot be empty"}
-password2=$(dialog --stdout --passwordbox "Enter admin password again" 0 0) || exit 1
+password2=$(dialog --stdout --passwordbox "Enter password again:" 0 0) || exit 1
 clear
 [[ "$password" == "$password2" ]] || ( echo "Passwords did not match"; exit 1; )
 
 devicelist=$(lsblk -dplnx size -o name,size | grep -Ev "boot|rpmb|loop" | tac)
-device=$(dialog --stdout --menu "Select installation disk" 0 0 0 ${devicelist}) || exit 1
+device=$(dialog --stdout --menu "Select installation disk:" 0 0 0 ${devicelist}) || exit 1
 clear
 
 ### Set up logging ###
@@ -96,10 +96,10 @@ echo "$user:$password" | chpasswd --root /mnt
 echo "root:$password" | chpasswd --root /mnt
 
 ### Add user to sudoers ###
-arch-chroot /mnt sed -i '/%wheel ALL=(ALL) ALL/s/^#//g' sudoers
+sed -i '/%wheel ALL=(ALL) ALL/s/^# //g' /mnt/etc/sudoers
 arch-chroot /mnt gpasswd -a "$user" wheel
 
 ### Install yay ###
 arch-chroot /mnt git clone https://aur.archlinux.org/yay.git
 arch-chroot /mnt cd yay && makepkg -si
-arch-chroot /mnt cd .. && rm .rf yay
+arch-chroot /mnt cd .. && rm -rf yay
