@@ -34,6 +34,9 @@ exec 2> >(tee "stderr.log")
 timedatectl set-timezone Europe/Vienna
 timedatectl set-ntp true
 
+### Unmount /mnt ###
+umount -R /mnt
+
 ### Create partitions ###
 parted --script "${device}" -- mklabel gpt \
   mkpart ESP fat32 1Mib 513MiB \
@@ -68,7 +71,7 @@ pacstrap /mnt base base-devel linux linux-firmware amd-ucode zsh git grub efiboo
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
-arch-chroot /mtn systemctl enable dhcpcd
+arch-chroot /mnt systemctl enable dhcpcd
 
 echo "${hostname}" > /mnt/etc/hostname
 
