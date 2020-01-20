@@ -43,7 +43,7 @@ parted --script "${device}" -- mklabel gpt \
 part_boot="$(ls ${device}* | grep -E "^${device}p?1$")"
 part_root="$(ls ${device}* | grep -E "^${device}p?2$")"
 
-## Format partitions ###
+### Format partitions ###
 wipefs "${part_boot}"
 wipefs "${part_root}"
 
@@ -64,7 +64,64 @@ grep -E -A 1 ".*Germany.*$" /etc/pacman.d/mirrorlist.bak | sed '/--/d' >> /etc/p
 rm /etc/pacman.d/mirrorlist.bak
 
 ### Install and configure the system ###
-pacstrap /mnt base base-devel linux linux-firmware amd-ucode dhcpcd zsh git grub efibootmgr os-prober ntfs-3g gnome gdm nvidia firefox firefox-i18n-de
+packages=()
+
+cmd=(dialog --separate-output --checklist "Select options:" 0 0 0)
+options=(
+    01 "base linux linux-firmware" on
+    02 "base-devel" on
+    03 "dhcpcd" on
+    04 "grub efibootmgr" on
+    05 "os-prober ntfs-3g" on
+    06 "amd-ucode" on
+    07 "nvidia" on
+    08 "gnome gdm" on
+    09 "firefox" on
+    10 "zsh" on
+    11 "git" on)
+
+choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+clear
+for choice in $choices
+do
+    case $choice in
+        01)
+            packages+=("base linux linux-firmware")
+            ;;
+        02)
+            packages+=("base-devel")
+            ;;
+        03)
+            packages+=("dhcpcd")
+            ;;
+        04)
+            packages+=("grub efibootmgr")
+            ;;
+        05)
+            packages+=("os-prober ntfs-3g")
+            ;;
+        06)
+            packages+=("amd-ucode")
+            ;;
+        07)
+            packages+=("nvidia")
+            ;;
+        08)
+            packages+=("gnome gdm")
+            ;;
+        09)
+            packages+=("firefox firefox-i18n-de")
+            ;;
+        10)
+            packages+=("zsh")
+            ;;
+        11)
+            packages+=("git")
+            ;;
+    esac
+done
+
+pacstrap /mnt ${packages[@]}
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
