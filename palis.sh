@@ -144,9 +144,10 @@ arch-chroot /mnt mkinitcpio -p linux
 
 ### Install GRUB ###
 arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 
 ### Create user ###
-arch-chroot /mnt useradd -m -g users -c '"$fullname"' -s /bin/zsh "$user"
+arch-chroot /mnt useradd -m -g users -c "$fullname" -s /bin/zsh "$user"
 
 ### Change passwords ###
 echo "$user:$password" | chpasswd --root /mnt
