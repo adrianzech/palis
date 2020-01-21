@@ -2,6 +2,12 @@
 set -uo pipefail
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 
+### Variables ###
+locale="de_AT"
+keymap="de-latin1"
+timezone="Europe/Vienna"
+mirror_country="Austria"
+
 ### Get infomation from user ###
 hostname=$(dialog --stdout --inputbox "Enter hostname:" 0 0) || exit 1
 clear
@@ -36,9 +42,9 @@ timedatectl set-ntp true
 
 ### Create partitions ###
 parted --script "${device}" -- mklabel gpt \
-  mkpart ESP fat32 1Mib 513MiB \
-  set 1 boot on \
-  mkpart primary ext4 513MiB 100%
+    mkpart ESP fat32 1Mib 513MiB \
+    set 1 boot on \
+    mkpart primary ext4 513MiB 100%
 
 part_boot="$(ls ${device}* | grep -E "^${device}p?1$")"
 part_root="$(ls ${device}* | grep -E "^${device}p?2$")"
@@ -55,13 +61,10 @@ mount "${part_root}" /mnt
 mkdir /mnt/boot
 mount "${part_boot}" /mnt/boot
 
-### Edit mirrorlist ##
-mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak && touch /etc/pacman.d/mirrorlist
-
-grep -E -A 1 ".*Austria.*$" /etc/pacman.d/mirrorlist.bak | sed '/--/d' >> /etc/pacman.d/mirrorlist
-grep -E -A 1 ".*Germany.*$" /etc/pacman.d/mirrorlist.bak | sed '/--/d' >> /etc/pacman.d/mirrorlist
-
-rm /etc/pacman.d/mirrorlist.bak
+### Create mirrorlist ##
+pacman --noconfirm -S reflector
+cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
+reflector -c $mirror_country -f 10 -p http --save /etc/pacman.d/mirrorlist
 
 ### Install and configure the system ###
 packages=()
@@ -125,18 +128,27 @@ pacstrap /mnt ${packages[@]}
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
-arch-chroot /mnt systemctl enable dhcpcd.service
-arch-chroot /mnt systemctl enable gdm.service
+### Enable services ###
+for package in $packages
+do
+    case $package in
+        dhcpcd)
+            arch-chroot /mnt systemctl enable dhcpcd.service
+            ;;
+        gdm)
+            arch-chroot /mnt systemctl enable gdm.service
+            ;;
+    esac
+done
 
-echo "${hostname}" > /mnt/etc/hostname
+echo $hostname > /mnt/etc/hostname
 
-echo KEYMAP=de-latin1 > /mnt/etc/vconsole.conf
+echo KEYMAP=$keymap > /mnt/etc/vconsole.conf
 
-echo 'LANG="de_AT.UTF-8"' >> /mnt/etc/locale.conf
-echo 'LANG="en_US.UTF-8"' >> /mnt/etc/locale.conf
+echo "LANG=\"$locale.UTF-8\"" >> /mnt/etc/locale.conf
 arch-chroot /mnt locale-gen
 
-arch-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/Vienna /etc/localtime
+arch-chroot /mnt ln -sf /usr/share/zoneinfo/$timezone /etc/localtime
 arch-chroot /mnt hwclock --systohc
 
 ### Initramfs ###
@@ -156,8 +168,3 @@ echo "root:$password" | chpasswd --root /mnt
 ### Add user to sudoers ###
 sed -i '/%wheel ALL=(ALL) ALL/s/^# //g' /mnt/etc/sudoers
 arch-chroot /mnt gpasswd -a "$user" wheel
-
-### Install yay ###
-arch-chroot /mnt git clone https://aur.archlinux.org/yay.git
-arch-chroot /mnt cd yay && makepkg -si
-arch-chroot /mnt cd .. && rm -rf yay
