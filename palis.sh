@@ -62,7 +62,7 @@ mkdir /mnt/boot
 mount "${part_boot}" /mnt/boot
 
 ### Create mirrorlist ##
-pacman --noconfirm -S reflector
+pacman -Sy && pacman --noconfirm -S reflector
 cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
 reflector -c $mirror_country -f 10 -p http --save /etc/pacman.d/mirrorlist
 
