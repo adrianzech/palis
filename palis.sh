@@ -62,9 +62,8 @@ mkdir /mnt/boot
 mount "${part_boot}" /mnt/boot
 
 ### Create mirrorlist ##
-pacman -Sy && pacman --noconfirm -S reflector
 cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
-reflector -c $mirror_country -f 10 -p http --save /etc/pacman.d/mirrorlist
+grep -E -A 1 ".*Austria.*$" /etc/pacman.d/mirrorlist.bak | sed '/--/d' > /etc/pacman.d/mirrorlist
 
 ### Install and configure the system ###
 packages=()
