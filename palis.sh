@@ -37,7 +37,7 @@ exec 1> >(tee "stdout.log")
 exec 2> >(tee "stderr.log")
 
 ### Set timezonme ###
-timedatectl set-timezone Europe/Vienna
+timedatectl set-timezone $timezone
 timedatectl set-ntp true
 
 ### Create partitions ###
@@ -156,6 +156,7 @@ arch-chroot /mnt mkinitcpio -p linux
 
 ### Install GRUB ###
 arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+sed -i "s/\<quiet\>/& nvidia-drm.nomodeset=1/" /mnt/etc/default/grub
 arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 
 ### Create user ###
